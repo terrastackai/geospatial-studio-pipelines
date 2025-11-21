@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-FROM us.icr.io/gfmaas/gsp-terratorch-base:latest
+FROM quay.io/geospatial-studio/gsp-terratorch-base:latest
 
 USER root
 

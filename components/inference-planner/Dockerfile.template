@@ -8,7 +8,7 @@
 # Copyright IBM Corp. 2025 ALL RIGHTS RESERVED
 ################################################################
 
-FROM us.icr.io/gfmaas/gsp-gdal-base:latest
+FROM quay.io/geospatial-studio/gsp-gdal-base:latest
 USER root
 
 RUN pip install --upgrade pip

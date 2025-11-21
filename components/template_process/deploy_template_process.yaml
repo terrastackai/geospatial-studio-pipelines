@@ -23,7 +23,7 @@ spec:
        - name: ris-private-registry
       containers:
       - name: pipeline-run-inference
-        image: us.icr.io/gfmaas/claimed-template_process:v1.0
+        image: quay.io/geospatial-studio/claimed-template_process:v0.1.0
         env:
           - name: orchestrate_db_uri
             valueFrom:

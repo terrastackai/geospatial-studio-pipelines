@@ -3,7 +3,7 @@
 
 
 # FROM registry.access.redhat.com/ubi8/python-39
-FROM us.icr.io/gfmaas/loaded_inference_pipelines_base
+FROM quay.io/geospatial-studio/gsp_gdal_base:latest
 USER root
 
 RUN pip install --upgrade pip

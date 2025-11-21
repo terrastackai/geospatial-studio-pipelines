@@ -15,12 +15,12 @@ cp -r ../../general_libraries/orchestrate_wrapper .
 3. Use the CLAIMED library to build the component; this uses the current directory `pwd` as the docker context; ensure main script and additional files/dirs are in the same folder.  This will build a docker image starting from the `Dockerfile.template`.  It will include the 
 
 ```bash
-c3_create_operator --repository us.icr.io/gfmaas --dockerfile_template_path Dockerfile.template --log_level DEBUG --version v1.0-test --local_mode template_process.py {list any other files/folders to include in the image}
+c3_create_operator --repository quay.io/geospatial-studio --dockerfile_template_path Dockerfile.template --log_level DEBUG --version v0.1.0 --local_mode template_process.py {list any other files/folders to include in the image}
 ```
 
 4. Push the image to a container registry from where it can be deployed:
 ```bash
-docker push us.icr.io/gfmaas/template_process:v1.0-test
+docker push quay.io/geospatial-studio/template_process:v0.1.0
 ```
 
 5. Remove gfm_logger and gfm_data_processing from current directory

@@ -6,8 +6,8 @@
 
 set -e  # Exit on any errors
 
-C3_REPOSITORY="us.icr.io/gfmaas"
-DEFAULT_VERSION="v1.0.1"
+C3_REPOSITORY="quay.io/geospatial-studio"
+DEFAULT_VERSION="v0.1.0"
 DEFAULT_OPTIMIZE="true"
 
 # Directory paths

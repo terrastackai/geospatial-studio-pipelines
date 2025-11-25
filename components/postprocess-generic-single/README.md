@@ -24,7 +24,7 @@ cp -r ../../general_libraries/gfm_logger . && cp -r ../../general_libraries/gfm_
 2. Create component using c3; uses current directory `pwd` as the docker context; ensure main script and additional files/dirs are in the same folder
 
 ```
-c3_create_operator --repository us.icr.io/gfmaas --dockerfile_template_path Dockerfile.template --log_level DEBUG --version v1.0.4-oct23-test0 --local_mode postprocess-generic-single.py postprocess_generic_helper_functions.py postprocess_regularization.py gfm_logger gfm_data_processing
+c3_create_operator --repository quay.io/geospatial-studio --dockerfile_template_path Dockerfile.template --log_level DEBUG --version v0.1.0 --local_mode postprocess-generic-single.py postprocess_generic_helper_functions.py postprocess_regularization.py gfm_logger gfm_data_processing
 ```
 
 3. Remove gfm_logger and gfm_data_processing from current directory

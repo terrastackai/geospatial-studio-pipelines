@@ -1,0 +1,18 @@
+[project]
+name = "post_process"
+version = "0.1.0"
+description = "post-processing generic pipeline"
+requires-python = ">=3.9"
+readme = "README.md"
+
+authors = [
+  {name = "Catherine Wanjiru", email = "catherine.wanjiru@ibm.com"}
+]
+dependencies = [
+  "rasterio",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+

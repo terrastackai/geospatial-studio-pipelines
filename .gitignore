@@ -15,3 +15,22 @@ geoserver-rest
 *.log
 .ipynb_checkpoints
 tasks
+# Byte-compiled / optimized / compiled files
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+*.egg-info/
+.eggs/
+
+# Build artifacts
+dist/
+build/
+*.egg
+
+# Environments
+venv/
+env/
+.venv/
+.env/
+*.pipelines/

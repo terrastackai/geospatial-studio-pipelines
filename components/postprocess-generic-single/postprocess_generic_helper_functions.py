@@ -14,6 +14,7 @@ import xarray as xr
 from uuid import uuid4
 import geopandas as gpd
 from pathlib import Path
+from itertools import chain
 from zipfile import ZipFile
 from rasterio import features
 from typing import List, Union
@@ -422,9 +423,11 @@ def zip_inference_data(task_dir):
     zip_location = f"{task_dir}/archive.zip"
 
     directory = Path(task_dir)
+    geoserver_supported_extensions = ("*.tif", "*.gpkg", "*.shp", "*.nc")
 
     with ZipFile(zip_location, mode="w") as archive:
-        for file_path in directory.rglob("*.tif"):
+        # Supported files to be pushed to Geoserver at the moment
+        for file_path in chain.from_iterable(directory.glob(ext) for ext in geoserver_supported_extensions):
             archive.write(file_path, arcname=file_path.relative_to(directory))
 
 

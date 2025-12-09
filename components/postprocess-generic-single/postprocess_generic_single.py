@@ -45,7 +45,7 @@ process_id = os.getenv("process_id", "postprocess-generic")
 metric_manager = MetricManager(component_name=process_id)
 
 
-def post_process(inference_dict, imputed_input_image, raw_input_image, xds, i=0):
+def post_process_original(inference_dict, imputed_input_image, raw_input_image, xds, i=0):
     """Post processing the output file by Masking on output image
 
     Parameters
@@ -160,6 +160,88 @@ def regularize_prediction(inference_dict, raster_to_regularize):
     return regularized, regularized_vector
 
 
+def update_processed_paths(post_process_outputs, active_post_processing_steps, task_dict):
+    """Function to update task_dict with the new file outputs
+
+    Parameters
+    ----------
+    post_process_outputs : dict
+        Outputs of the post processing steps
+    active_post_processing_steps : List(Dict(str, All))
+        List of all active post processing steps
+    task_dict : dict
+        Dict with the tasks details written
+
+    Returns
+    -------
+    dict
+        Updated task dict
+    """
+
+    for registered in active_post_processing_steps:
+        print(registered['name'])
+
+        # grab function name
+        func_name = registered['name']
+
+        # index outputs with func name
+        print(post_process_outputs[func_name])
+
+
+        # append func_name with model_output_<>_image
+        post_processed_model_output = f"model_output_{func_name}_image"
+
+        # assign this name to the processed_file_path file_path
+        task_dict[post_processed_model_output] = post_process_outputs[func_name]['processed_file_path']
+
+    return task_dict
+
+
+def update_input_paths(active_post_processing_steps, model_output_image_path):
+    """Function to populate input paths
+
+
+    Parameters
+    ----------
+    active_post_processing_steps : List[Dict[str, Any]
+        list of dicts of activated post processing steps
+    model_output_image_path : str
+        Model output image path
+
+    Returns
+    -------
+    dict
+        Post processing steps updated with img_path and out_path
+    """
+    if active_post_processing_steps:
+        for step in active_post_processing_steps:
+            # grab input image & file extension
+            img_path_root, img_path_ext = os.path.splitext(model_output_image_path)
+
+            # grab geoserver file extension from function name i.e im2poly_regularize
+            output_file_ext = step.get('params',{}).get("geoserver_suffix_extension",{})
+ 
+            # grab geoserver file suffix from function name i.e im2poly_regularize
+            suffix = step['name']
+
+            if suffix:
+                # Generate the input and output file paths
+                # If file_extension not provided, save as a ".tif"
+                if output_file_ext:
+                    model_output_post_processed_image = model_output_image_path.replace(img_path_ext, f"_{suffix}.{output_file_ext}")
+                else:
+                    output_file_ext = "tif"
+                    model_output_post_processed_image = model_output_image_path.replace(img_path_ext, f"_{suffix}.{output_file_ext}")
+
+                # Update the active_post_processing_steps dict with img_paths and out_paths
+                step['params']['img_path'] = model_output_image_path
+                step['params']['out_path'] = model_output_post_processed_image
+            else:
+                logger.error("Geoserver suffix expected to create the new file path. ")
+
+
+        return active_post_processing_steps
+
 @metric_manager.count_failures(inference_id=inference_id, task_id=task_id)
 @metric_manager.record_duration(inference_id=inference_id, task_id=task_id)
 def postprocess_generic_single():
@@ -210,11 +292,12 @@ def postprocess_generic_single():
         masked = False
         regularized = False
         masked_output_path = None
+        post_processing_config = inference_dict.get("post_processing",{})
 
         # Open original image if any post processing is taking place
         if "post_processing" in inference_dict.keys():
             if isinstance(model_input_imputed_image, list):
-                masked, xds = post_process(
+                masked, xds = post_process_original(
                     inference_dict=inference_dict,
                     imputed_input_image=model_input_imputed_image[rgb_index],
                     raw_input_image=model_input_original_image[rgb_index],
@@ -222,7 +305,7 @@ def postprocess_generic_single():
                     i=rgb_index,
                 )
             else:
-                masked, xds = post_process(
+                masked, xds = post_process_original(
                     inference_dict=inference_dict,
                     imputed_input_image=model_input_imputed_image,
                     raw_input_image=model_input_original_image,
@@ -246,6 +329,7 @@ def postprocess_generic_single():
         )
 
         if regularized:
+            # TODO: Create a function to create this on the fly.
             model_output_regularized_image = model_output_image.replace(".tif", "_adaptive_regularized.tif")
             # Convert the geojson to a tif file
             geojson_to_tiff(
@@ -256,10 +340,79 @@ def postprocess_generic_single():
             )
             task_dict["model_output_regularized_image"] = model_output_regularized_image
 
-        zip_inference_data(task_folder)
+        logger.info("*********** Optional post_processing steps ***********")
 
-        with open(task_config_path, "w") as fp:
-            json.dump(task_dict, fp, indent=4)
+        # Run all the registered post_procesing steps
+        from post_process.post_process import post_process
+        active_postprocessing_steps = post_processing_config.get("regularization_custom",{})
+        logger.debug(
+            f"*********Active Postprocessing steps:********** {active_postprocessing_steps}"
+        )
+
+        if active_postprocessing_steps:
+            # TODO: For now, we download the python script at this point and register the function.
+
+            download_plugins_config = post_processing_config.get("download_scripts",{})
+            download_scripts = download_plugins_config.get("activated", "False")
+            logger.info(f"Download custom post processing scripts activated: {download_scripts}")
+            if download_scripts == "True":
+                from post_process.post_process.sdk import download_plugins_to_local
+
+                logger.info("*********** Downloading custom post processing scripts ***********")
+
+                results, saved_plugins = download_plugins_to_local(
+                    verify_ssl=download_plugins_config.get("verify_ssl", "False"),
+                    tmp_plugins_dir=task_folder,
+                    plugins_list=download_plugins_config.get(
+                        "plugins_list",
+                        [
+                            {
+                                "url": "https://s3.us-east.cloud-object-storage.appdomain.cloud/geospatial-studio-example-data/example_post_processing_scripts/user_masking_testing.py?response-content-type=application%2Foctet-stream&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=1c6317aac0054b9890797f09f217b54e%2F20251202%2Fus-east%2Fs3%2Faws4_request&X-Amz-Date=20251202T124637Z&X-Amz-Expires=7200&X-Amz-SignedHeaders=host&X-Amz-Signature=8a7a4cf870d4bb517b2769460206a5741ef0c0f3d10fe336dfa4ff586e596b5a",
+                                "filename": "user_masking_testing.py",
+                            },
+                            {
+                                "url": "https://s3.us-east.cloud-object-storage.appdomain.cloud/geospatial-studio-example-data/example_post_processing_scripts/cloud_masking_testing.py?response-content-type=application%2Foctet-stream&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=1c6317aac0054b9890797f09f217b54e%2F20251202%2Fus-east%2Fs3%2Faws4_request&X-Amz-Date=20251202T130502Z&X-Amz-Expires=7200&X-Amz-SignedHeaders=host&X-Amz-Signature=08ad706c6cdea35b004593aa7c247ba6b503421d618b10db340fd521d4c06632",
+                                "filename": "cloud_masking_testing.py",
+                            },
+                        ],
+                    ),
+                )
+                logger.info(f"Downloaded plugins: {saved_plugins}")
+            # Update paths to the ones in the cluster/env
+            active_postprocessing_steps_updated_input_paths = update_input_paths(
+                active_post_processing_steps=active_postprocessing_steps,
+                model_output_image_path=model_output_image,
+            )
+            logger.info(f"Updated paths: {active_postprocessing_steps_updated_input_paths}")
+
+            # Run all the registered steps.
+            post_process_outputs = post_process(
+                raster_to_regularize,
+                steps_config=active_postprocessing_steps_updated_input_paths,
+                plugins_dir="post_process/post_process/generic/",
+            )
+            # Write to inference dict
+            task_dict_updated = update_processed_paths(
+                post_process_outputs=post_process_outputs,
+                active_post_processing_steps=active_postprocessing_steps_updated_input_paths,
+                task_dict=task_dict
+            )
+            logger.info(
+                f"********* Updated task_dict Postprocessing steps:********** {task_dict_updated}"
+            )
+
+            logger.info(f"Post_process outputs: {post_process_outputs}")
+
+        # TODO: Move to Geoserver
+        # - Is it possible for geoserver to know steps automatically and push the layers?
+
+        zip_inference_data(task_folder)
+        if active_postprocessing_steps:
+            with open(task_config_path, "w") as fp:
+                json.dump(task_dict, fp, indent=4)
+        else:
+            with open(task_config_path, "w") as fp:
+                json.dump(task_dict, fp, indent=4)
     except Exception as ex:
         report_exception(
             event_id=inference_id,

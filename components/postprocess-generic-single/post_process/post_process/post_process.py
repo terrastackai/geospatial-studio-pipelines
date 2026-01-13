@@ -6,7 +6,7 @@ from .registry import run_chain
 from .discovery import load_fs_plugins
 
 def post_process(img, steps_config: List[Dict[str, Any]], plugins_dir: str | None = None):
-    """Function to post_process based on the steps_config provided.
+    """Function to post_process based on the steps_config provided .
 
 
     Parameters

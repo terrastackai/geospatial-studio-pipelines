@@ -296,6 +296,11 @@ while True:
 
         # start_time = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
 
+        # if we want to run a generic python script, pull the correct 
+        if process_id=='python-processor':
+            process_exec=...
+            # TO DO: read requirements from script header and pip install
+
         # Here actually run the process code and capture the logs
         return_value = run_and_log(task_id, process_exec, process_id, inference_folder)
         logger.info(f">>>>>> Return code: {return_value}")

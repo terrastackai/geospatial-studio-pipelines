@@ -5,6 +5,7 @@
 import os
 import time
 import json
+import yaml 
 import random
 import logging
 import requests
@@ -282,6 +283,7 @@ while True:
     ######################################################################################################
 
     data = grab_new_task(engine, process_id)
+    # Data is a query from the database with (task_id, inference_id, inference_folder)
     print(data)
 
     ######################################################################################################
@@ -299,10 +301,64 @@ while True:
 
         # start_time = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
 
-        # if we want to run a generic python script, pull the correct 
-        # if process_id=='python-processor':
+        # if we want to run a generic python script, pull the correct
+        if process_id=='generic-python-processor':
+            logger.info(f">>>>>> Detected generic-python-processor, about to read script from inference_config file")
+            # read the script from the inference_config.yaml file
+            with open(f"{inference_folder}/{task_id}/inference_config.yaml", "r") as f:
+                inference_config_content = f.read()
+
+            inference_config = yaml.safe_load(inference_config_content)
+            # Get all the parameters
+            python_generic_processor_config = inference_config.get('generic_processor', None)
+            if python_generic_processor_config is None:
+                logger.error(f">>>>>> No generic_processor found in inference_config.yaml for task {task_id}, exiting with error")
+                update_status_after_run(engine, process_id, inference_id, task_id, "FAILED")
+                continue
+
+            name, status, description, processor_file_path, processor_parameters = (
+                python_generic_processor_config.get(k, d)
+                for k, d in [
+                    ("name", None),
+                    ("status", None),
+                    ("description", None),
+                    ("processor_file_path", None),
+                    ("processor_parameters", {}),
+                ]
+            )
+
+            # if the status is failed/pending, raise error to warn user that the script is not uploaded to COS
+            if status not in ['finished', 'FINISHED']:
+                logger.error(f">>>>>> generic_processor script is not uploaded to storage for task {task_id} with status {status}. Kindly upload the script.")
+                update_status_after_run(engine, process_id, inference_id, task_id, "FAILED")
+                continue
+            # if the status is finished, proceed to copy the script to the task folder
+            if processor_file_path:
+                os.copy(
+                    f"/data/{processor_file_path}", 
+                    f"{inference_folder}/{task_id}/{processor_file_path}"
+                )
+            # then, get the script_params , and grab the process_exec from the parameters
+            if processor_parameters:
+                # finally, run the process_exec
+                process_exec = f"python {inference_folder}/{task_id}/{processor_file_path}"
+                for param_key, param_value in processor_parameters.items():
+                    process_exec += f" --{param_key} {param_value}"
+                logger.info(f">>>>>> Constructed process_exec for generic-python-processor: {process_exec}")
+                return_value = run_and_log(task_id, process_exec, process_id, inference_folder)
+                logger.info(f">>>>>> Return code: {return_value}")
+
+            else:
+                logger.error(f">>>>>> No processor_parameters found in inference_config.yaml for task {task_id}, exiting with error")
+                update_status_after_run(engine, process_id, inference_id, task_id, "FAILED")
+                continue
+
         #     process_exec=...
         #     # TO DO: read requirements from script header and pip install
+        # cd into inference folder - get from inference_config
+        # make a change in the gateway to make a change to the POST/inference to inference_config
+        #
+        # Alter sql syntax to return pipeline_steps :Not necessary
 
         # Here actually run the process code and capture the logs
         return_value = run_and_log(task_id, process_exec, process_id, inference_folder)

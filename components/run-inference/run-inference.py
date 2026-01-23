@@ -10,7 +10,6 @@ This component reads the output from preprocessing and puts together a request t
 # pip install ibm-cos-sdk requests tenacity aiohttp opentelemetry-distro opentelemetry-exporter-otlp
 
 import asyncio
-import shutil
 import aiohttp
 import os
 import json
@@ -65,10 +64,10 @@ metric_manager = MetricManager(component_name=process_id)
 
 
 def _move_predicted_image(source, destination):
-    os.makedirs(os.path.dirname(destination), exist_ok=True)
-    shutil.move(source, destination)
-
-    return destination
+    dest = Path(destination)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    Path(source).rename(dest)
+    return str(dest)
 
 
 @retry(wait=wait_random(min=30, max=60), stop=stop_after_attempt(6), reraise=True)

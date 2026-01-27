@@ -53,8 +53,8 @@ RUN curl -fsSL --retry 5 --retry-delay 3 --retry-all-errors \
     && chmod 700 ~/.kube
 WORKDIR /terratorch
 # Install Python dependencies with cache mount for faster rebuilds
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir --timeout=7200 \
+RUN pip install --upgrade pip && \
+    pip install --timeout=7200 \
     terratorch==1.1 \
     'diffusers<=0.34.0' \
     ipython \

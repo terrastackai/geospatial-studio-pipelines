@@ -46,7 +46,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean
 # Download and install kubectl (single RUN command for efficiency)
 RUN curl -fsSL -o /usr/local/bin/kubectl \
-    "https://dl.k8s.io/release/$(curl -fsSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+    "https://dl.k8s.io/release/v1.35.0/bin/linux/amd64/kubectl" \
     && chmod +x /usr/local/bin/kubectl \
     && mkdir -p ~/.kube \
     && chmod 700 ~/.kube

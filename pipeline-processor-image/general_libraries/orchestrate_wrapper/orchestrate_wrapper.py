@@ -330,7 +330,6 @@ while True:
     ######################################################################################################
 
     data = grab_new_task(engine, process_id)
-    # Data is a query from the database with (task_id, inference_id, inference_folder)
     print(data)
 
     ######################################################################################################

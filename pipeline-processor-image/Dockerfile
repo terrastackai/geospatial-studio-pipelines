@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal AS base
+FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi8/ubi-minimal AS base
 
 ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8

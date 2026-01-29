@@ -15,12 +15,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin
-
-# Uncomment next 2 lines for local testing
-import dotenv
 import requests
 from sqlalchemy import create_engine, text
 
+# Uncomment next 2 lines for local testing
+import dotenv
 dotenv.load_dotenv()
 
 process_id = os.getenv("process_id", "sentinelhub_connector")

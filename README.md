@@ -1,3 +1,12 @@
+
+# DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED
+
+Please use the core repository
+[https://github.com/terrastackai/geospatial-studio-core/tree/main/pipelines](https://github.com/terrastackai/geospatial-studio-core/tree/main/pipelines)  
+
+# DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED
+
+
 ![Geospatial Studio banner](./docs/images/banner.png)
 
 # 🌍 GEO Studio: Pipelines
